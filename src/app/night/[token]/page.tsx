@@ -142,7 +142,8 @@ export default function MovieNightPage() {
   };
 
   // Proponer película
-  // Función modificada handleProposeMovie para manejar las fechas correctamente
+  // Modifica la función handleProposeMovie para preservar los datos originales
+
   const handleProposeMovie = async () => {
     if (!selectedMovie || !movieNight || !username) return;
 
@@ -158,13 +159,13 @@ export default function MovieNightPage() {
     }
 
     try {
-      // Crear un objeto seguro para la propuesta que evite problemas con fechas inválidas
+      // Crear un objeto seguro para la propuesta
       const movieData: {
         tmdbId: number;
         title: string;
         poster_path: string;
         overview: string;
-        release_date?: string; // Añadimos esta propiedad opcional
+        release_date?: string;
       } = {
         tmdbId: selectedMovie.id,
         title: selectedMovie.title,
@@ -185,8 +186,13 @@ export default function MovieNightPage() {
         proposedBy: username,
       });
 
-      // Actualizar estado local
-      setMovieNight(response.movieNight);
+      // AQUÍ ESTÁ EL PROBLEMA: response.movieNight solo contiene las películas
+      // Actualizar estado local preservando otros datos del movieNight
+      setMovieNight({
+        ...movieNight, // Mantener todos los datos originales
+        movies: response.movieNight.movies, // Actualizar solo las películas
+      });
+
       setUserVotes(response.userVotes || []);
       setVotesRemaining(response.votesRemaining);
       setSelectedMovie(null);
@@ -194,12 +200,29 @@ export default function MovieNightPage() {
       toast.success("Movie proposed", {
         description: `You proposed "${selectedMovie.title}" and voted for it.`,
       });
+
+      // Opcionalmente, recargar todos los datos para asegurar sincronización
+      if (username) {
+        refreshMovieNightData(username);
+      }
     } catch (error) {
       console.error("Error proposing movie:", error);
       toast.error("Failed to propose movie", {
         description:
           error instanceof Error ? error.message : "Please try again.",
       });
+    }
+  };
+
+  // Función auxiliar para refrescar datos
+  const refreshMovieNightData = async (username: string) => {
+    try {
+      const response = await getMovieNight(token, username);
+      setMovieNight(response.movieNight);
+      setUserVotes(response.userVotes || []);
+      setVotesRemaining(response.votesRemaining);
+    } catch (error) {
+      console.error("Error refreshing movie night data:", error);
     }
   };
 
@@ -210,7 +233,7 @@ export default function MovieNightPage() {
     try {
       const response = await voteForMovie(token, tmdbId, username);
 
-      // Actualizar estado local
+      // Actualizar estado local preservando datos originales
       setMovieNight({
         ...movieNight,
         movies: response.movies,
@@ -221,6 +244,9 @@ export default function MovieNightPage() {
       toast.success("Vote recorded", {
         description: `You voted for "${response.movie.title}".`,
       });
+
+      // Opcionalmente, refrescar todos los datos
+      refreshMovieNightData(username);
     } catch (error) {
       toast.error("Failed to vote", {
         description:
