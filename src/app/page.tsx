@@ -156,21 +156,40 @@ export default function Home() {
           padding: 2px;
         }
 
-        /* Animaciones */
+        /* Animaciones - Velocidades más rápidas para móviles */
         .animate-slide-right {
-          animation: slideRight 120s linear infinite;
+          animation: slideRight 70s linear infinite;
         }
 
         .animate-slide-left {
-          animation: slideLeft 120s linear infinite;
+          animation: slideLeft 70s linear infinite;
         }
 
         .animate-slide-right-slow {
-          animation: slideRight 150s linear infinite;
+          animation: slideRight 90s linear infinite;
         }
 
         .animate-slide-left-slow {
-          animation: slideLeft 150s linear infinite;
+          animation: slideLeft 90s linear infinite;
+        }
+
+        /* Velocidades optimizadas para pantallas medianas y grandes */
+        @media (min-width: 768px) {
+          .animate-slide-right {
+            animation: slideRight 120s linear infinite;
+          }
+
+          .animate-slide-left {
+            animation: slideLeft 120s linear infinite;
+          }
+
+          .animate-slide-right-slow {
+            animation: slideRight 150s linear infinite;
+          }
+
+          .animate-slide-left-slow {
+            animation: slideLeft 150s linear infinite;
+          }
         }
 
         @keyframes slideRight {
