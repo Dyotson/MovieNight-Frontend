@@ -23,9 +23,7 @@ export default function Home() {
         const data = await response.json();
 
         if (data.success && Array.isArray(data.results)) {
-          // Duplicar los resultados para tener suficientes posters
-          const duplicatedMovies = [...data.results, ...data.results];
-          setPopularMovies(duplicatedMovies);
+          setPopularMovies(data.results);
         }
       } catch (error) {
         console.error("Error fetching popular movies:", error);
@@ -37,22 +35,101 @@ export default function Home() {
     fetchPopularMovies();
   }, []);
 
+  // Dividimos las 20 películas en 4 filas de 5 películas
+  const row1 = popularMovies.slice(0, 5);
+  const row2 = popularMovies.slice(5, 10);
+  const row3 = popularMovies.slice(10, 15);
+  const row4 = popularMovies.slice(15);
+
   return (
     <div className="relative min-h-screen overflow-hidden">
-      {/* Fondo de posters al estilo Plex */}
+      {/* Fondo animado de caratulas */}
       {!loading && (
         <div className="absolute inset-0 w-full h-full -z-10">
-          <div className="poster-grid">
-            {popularMovies.map((movie, index) => (
-              <div key={`poster-${movie.id}-${index}`} className="poster-item">
-                <img
-                  src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
-                  alt={movie.title}
-                  className="poster-image"
-                />
-              </div>
-            ))}
+          {/* Primera fila - deslizamiento hacia la derecha */}
+          <div className="absolute h-1/4 w-full overflow-hidden top-0">
+            <div className="poster-row animate-slide-right">
+              {row1
+                .concat(row1)
+                .concat(row1)
+                .map((movie, index) => (
+                  <div
+                    key={`row1-${movie.id}-${index}`}
+                    className="poster-item"
+                  >
+                    <img
+                      src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
+                      alt={movie.title}
+                      className="h-full object-cover rounded-sm"
+                    />
+                  </div>
+                ))}
+            </div>
           </div>
+
+          {/* Segunda fila - deslizamiento hacia la izquierda */}
+          <div className="absolute h-1/4 w-full overflow-hidden top-1/4">
+            <div className="poster-row animate-slide-left">
+              {row2
+                .concat(row2)
+                .concat(row2)
+                .map((movie, index) => (
+                  <div
+                    key={`row2-${movie.id}-${index}`}
+                    className="poster-item"
+                  >
+                    <img
+                      src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
+                      alt={movie.title}
+                      className="h-full object-cover rounded-sm"
+                    />
+                  </div>
+                ))}
+            </div>
+          </div>
+
+          {/* Tercera fila - deslizamiento hacia la derecha (más lento) */}
+          <div className="absolute h-1/4 w-full overflow-hidden top-1/2">
+            <div className="poster-row animate-slide-right-slow">
+              {row3
+                .concat(row3)
+                .concat(row3)
+                .map((movie, index) => (
+                  <div
+                    key={`row3-${movie.id}-${index}`}
+                    className="poster-item"
+                  >
+                    <img
+                      src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
+                      alt={movie.title}
+                      className="h-full object-cover rounded-sm"
+                    />
+                  </div>
+                ))}
+            </div>
+          </div>
+
+          {/* Cuarta fila - deslizamiento hacia la izquierda (más lento) */}
+          <div className="absolute h-1/4 w-full overflow-hidden top-3/4">
+            <div className="poster-row animate-slide-left-slow">
+              {row4
+                .concat(row4)
+                .concat(row4)
+                .map((movie, index) => (
+                  <div
+                    key={`row4-${movie.id}-${index}`}
+                    className="poster-item"
+                  >
+                    <img
+                      src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
+                      alt={movie.title}
+                      className="h-full object-cover rounded-sm"
+                    />
+                  </div>
+                ))}
+            </div>
+          </div>
+
           {/* Capa de oscurecimiento para mejor legibilidad */}
           <div className="absolute inset-0 bg-black/70"></div>
         </div>
@@ -86,46 +163,53 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Estilos para el grid de posters */}
+      {/* Estilos para las filas de posters */}
       <style jsx>{`
-        .poster-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-          gap: 0;
-          width: 100%;
+        .poster-row {
+          display: flex;
+          white-space: nowrap;
           height: 100%;
-          overflow: hidden;
         }
 
         .poster-item {
-          width: 100%;
           height: 100%;
-          overflow: hidden;
-          position: relative;
+          flex-shrink: 0;
+          width: 180px;
+          padding: 2px;
         }
 
-        .poster-image {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          transform: scale(1.1);
-          transition: transform 2s ease-in-out;
+        /* Animaciones */
+        .animate-slide-right {
+          animation: slideRight 90s linear infinite;
         }
 
-        .poster-item:nth-child(odd) .poster-image {
-          animation: subtle-zoom 15s infinite alternate;
+        .animate-slide-left {
+          animation: slideLeft 90s linear infinite;
         }
 
-        .poster-item:nth-child(even) .poster-image {
-          animation: subtle-zoom 18s infinite alternate-reverse;
+        .animate-slide-right-slow {
+          animation: slideRight 120s linear infinite;
         }
 
-        @keyframes subtle-zoom {
+        .animate-slide-left-slow {
+          animation: slideLeft 120s linear infinite;
+        }
+
+        @keyframes slideRight {
           0% {
-            transform: scale(1);
+            transform: translateX(-100%);
           }
           100% {
-            transform: scale(1.15);
+            transform: translateX(0%);
+          }
+        }
+
+        @keyframes slideLeft {
+          0% {
+            transform: translateX(0%);
+          }
+          100% {
+            transform: translateX(-100%);
           }
         }
       `}</style>
