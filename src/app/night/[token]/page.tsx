@@ -129,7 +129,13 @@ export default function MovieNightPage() {
 
     try {
       // Crear un objeto seguro para la propuesta que evite problemas con fechas inválidas
-      const movieData = {
+      const movieData: {
+        tmdbId: number;
+        title: string;
+        poster_path: string;
+        overview: string;
+        release_date?: string; // Añadimos esta propiedad opcional
+      } = {
         tmdbId: selectedMovie.id,
         title: selectedMovie.title,
         poster_path: selectedMovie.poster_path,
