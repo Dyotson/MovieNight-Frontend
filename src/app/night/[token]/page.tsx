@@ -482,13 +482,15 @@ export default function MovieNightPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {movieNight.movies.map((proposal) => (
-            <MovieCard
-              key={proposal.tmdbId}
-              movie={proposal}
-              onVote={() => handleVoteForMovie(proposal.tmdbId)}
-            />
-          ))}
+          {[...movieNight.movies]
+            .sort((a, b) => b.votes - a.votes) // Ordenar por votos (mayor a menor)
+            .map((proposal) => (
+              <MovieCard
+                key={proposal.tmdbId}
+                movie={proposal}
+                onVote={() => handleVoteForMovie(proposal.tmdbId)}
+              />
+            ))}
         </div>
       )}
     </div>
