@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "sonner";
+import Link from "next/link";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,7 +28,20 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <div className="flex flex-col min-h-screen">
+            <main className="flex-grow">{children}</main>
+            <footer className="py-4 text-center text-sm text-muted-foreground border-t">
+              Created by{" "}
+              <Link
+                href="https://github.com/Dyotson"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium hover:text-primary underline underline-offset-4"
+              >
+                Dyotson
+              </Link>
+            </footer>
+          </div>
           <Toaster position="top-center" />
         </ThemeProvider>
       </body>
