@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,13 +14,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { toast } from "sonner";
+import { getMovieNight } from "@/lib/movie-night-api"; // Import nueva función
 
 export default function JoinMovieNight() {
   const router = useRouter();
   const [token, setToken] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleJoin = () => {
+  const handleJoin = async () => {
     if (!token || token.length !== 5) {
       toast.error("Invalid token", {
         description: "Please enter a valid 5-character token.",
@@ -27,19 +29,22 @@ export default function JoinMovieNight() {
       return;
     }
 
-    // In a real app, we would validate the token against a database
-    // For this demo, we'll check localStorage
-    const movieNight = localStorage.getItem(`movieNight_${token}`);
+    setIsLoading(true);
 
-    if (!movieNight) {
+    try {
+      // Verificar si la sesión existe
+      await getMovieNight(token);
+
+      // Si no hay error, la sesión existe, redirigir
+      router.push(`/night/${token}`);
+    } catch (error) {
       toast.error("Movie night not found", {
         description:
           "The token you entered doesn't match any active movie nights.",
       });
-      return;
+    } finally {
+      setIsLoading(false);
     }
-
-    router.push(`/night/${token}`);
   };
 
   return (
@@ -67,8 +72,8 @@ export default function JoinMovieNight() {
           </div>
         </CardContent>
         <CardFooter>
-          <Button onClick={handleJoin} className="w-full">
-            Join Movie Night
+          <Button onClick={handleJoin} className="w-full" disabled={isLoading}>
+            {isLoading ? "Joining..." : "Join Movie Night"}
           </Button>
         </CardFooter>
       </Card>

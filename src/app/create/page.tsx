@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createMovieNight } from "@/lib/movie-night-api";
 import {
   Dialog,
   DialogContent,
@@ -23,8 +25,6 @@ import { CalendarIcon, Copy } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
-import { generateToken } from "@/lib/utils";
-import { toast } from "sonner";
 
 export default function CreateMovieNight() {
   const router = useRouter();
@@ -37,7 +37,7 @@ export default function CreateMovieNight() {
   const [token, setToken] = useState("");
   const [inviteLink, setInviteLink] = useState("");
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!name || !date || !time) {
       toast.error("Missing information", {
         description: "Please fill in all required fields.",
@@ -45,32 +45,33 @@ export default function CreateMovieNight() {
       return;
     }
 
-    // Generate a unique token
-    const newToken = generateToken();
-    setToken(newToken);
+    try {
+      // 1. Crear la sesión utilizando la API
+      const dateTime = new Date(date); // Combinar fecha y hora
+      dateTime.setHours(
+        parseInt(time.split(":")[0]),
+        parseInt(time.split(":")[1])
+      );
 
-    // Create invite link
-    const baseUrl = window.location.origin;
-    const link = `${baseUrl}/night/${newToken}`;
-    setInviteLink(link);
+      const response = await createMovieNight({
+        name,
+        date: dateTime.toISOString(),
+        maxProposals: limitProposals ? maxProposals : null,
+        username: "Host", // Opcional, puedes pedirle al usuario su nombre
+      });
 
-    // Store movie night data
-    const movieNight = {
-      name,
-      date: date?.toISOString(),
-      time,
-      limitProposals,
-      maxProposals: limitProposals ? maxProposals : null,
-      token: newToken,
-      proposals: [],
-    };
+      // 2. Obtener token e invite link
+      setToken(response.movieNight.token);
+      setInviteLink(response.movieNight.inviteLink);
 
-    // In a real app, this would be stored in a database
-    // For this demo, we'll use localStorage
-    localStorage.setItem(`movieNight_${newToken}`, JSON.stringify(movieNight));
-
-    // Move to next step
-    setStep(2);
+      // 3. Avanzar al siguiente paso
+      setStep(2);
+    } catch (error) {
+      toast.error("Failed to create movie night", {
+        description:
+          error instanceof Error ? error.message : "Please try again later.",
+      });
+    }
   };
 
   const handleCopyLink = () => {

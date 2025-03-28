@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,29 +17,19 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Search, Calendar, Clock } from "lucide-react";
 import { format } from "date-fns";
-import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import MovieCard from "@/components/movie-card";
 import { searchMovies } from "@/lib/tmdb";
+import {
+  getMovieNight,
+  joinMovieNight,
+  proposeMovie,
+  voteForMovie,
+  MovieNight as MovieNightType,
+  MovieProposal,
+} from "@/lib/movie-night-api";
 
-interface MovieNight {
-  name: string;
-  date: string;
-  time: string;
-  limitProposals: boolean;
-  maxProposals: number | null;
-  token: string;
-  proposals: MovieProposal[];
-}
-
-interface MovieProposal {
-  id: number;
-  title: string;
-  posterPath: string;
-  votes: number;
-  proposedBy: string;
-}
-
+// Actualizar las interfaces para que coincidan con la API
 interface Movie {
   id: number;
   title: string;
@@ -51,35 +42,52 @@ export default function MovieNightPage() {
   const params = useParams();
   const token = params.token as string;
 
-  const [movieNight, setMovieNight] = useState<MovieNight | null>(null);
+  const [movieNight, setMovieNight] = useState<MovieNightType | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Movie[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [username, setUsername] = useState("");
   const [usernameSet, setUsernameSet] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [userVotes, setUserVotes] = useState<number[]>([]);
+  const [votesRemaining, setVotesRemaining] = useState<number | null>(null);
 
+  // Cargar datos iniciales
   useEffect(() => {
-    // In a real app, we would fetch this from a database
-    const storedMovieNight = localStorage.getItem(`movieNight_${token}`);
+    async function loadMovieNight() {
+      try {
+        // Verificar si hay un nombre de usuario guardado
+        const storedUsername = localStorage.getItem(`username_${token}`);
 
-    if (storedMovieNight) {
-      setMovieNight(JSON.parse(storedMovieNight));
-    } else {
-      toast.error("Movie night not found", {
-        description:
-          "The movie night you're looking for doesn't exist or has been deleted.",
-      });
+        if (storedUsername) {
+          setUsername(storedUsername);
+          setUsernameSet(true);
+
+          // Obtener los datos de la sesión con info del usuario
+          const response = await getMovieNight(token, storedUsername);
+          setMovieNight(response.movieNight);
+          setUserVotes(response.userVotes || []);
+          setVotesRemaining(response.votesRemaining);
+        } else {
+          // Obtener solo datos básicos
+          const response = await getMovieNight(token);
+          setMovieNight(response.movieNight);
+        }
+      } catch (error) {
+        toast.error("Movie night not found", {
+          description:
+            "The movie night you're looking for doesn't exist or has been deleted.",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     }
 
-    // Check if username is already set in localStorage
-    const storedUsername = localStorage.getItem(`username_${token}`);
-    if (storedUsername) {
-      setUsername(storedUsername);
-      setUsernameSet(true);
-    }
+    loadMovieNight();
   }, [token]);
 
+  // Manejar búsqueda de películas
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
 
@@ -96,107 +104,85 @@ export default function MovieNightPage() {
     }
   };
 
-  const handleSelectMovie = async (movie: Movie) => {
+  // Seleccionar película
+  const handleSelectMovie = (movie: Movie) => {
     setSelectedMovie(movie);
     setSearchResults([]);
     setSearchQuery("");
   };
 
-  const handleProposeMovie = () => {
-    if (!selectedMovie || !movieNight) return;
+  // Proponer película
+  const handleProposeMovie = async () => {
+    if (!selectedMovie || !movieNight || !username) return;
 
-    // Check if movie is already proposed
-    const isAlreadyProposed = movieNight.proposals.some(
-      (proposal) => proposal.id === selectedMovie.id
+    // Verificar si la película ya está propuesta
+    const isAlreadyProposed = movieNight.movies.some(
+      (proposal) => proposal.tmdbId === selectedMovie.id
     );
 
     if (isAlreadyProposed) {
-      // Vote for the movie instead
+      // Votar por la película existente
       handleVoteForMovie(selectedMovie.id);
       return;
     }
 
-    // Check if user has reached proposal limit
-    if (movieNight.limitProposals) {
-      const userProposals = movieNight.proposals.filter(
-        (proposal) => proposal.proposedBy === username
-      );
+    try {
+      const response = await proposeMovie(token, {
+        movie: {
+          tmdbId: selectedMovie.id,
+          title: selectedMovie.title,
+          poster_path: selectedMovie.poster_path,
+          overview: selectedMovie.overview,
+          release_date: selectedMovie.release_date,
+        },
+        proposedBy: username,
+      });
 
-      if (userProposals.length >= (movieNight.maxProposals || 0)) {
-        toast.error("Proposal limit reached", {
-          description: `You can only propose up to ${movieNight.maxProposals} movies.`,
-        });
-        return;
-      }
+      // Actualizar estado local
+      setMovieNight(response.movieNight);
+      setUserVotes(response.userVotes || []);
+      setVotesRemaining(response.votesRemaining);
+      setSelectedMovie(null);
+
+      toast.success("Movie proposed", {
+        description: `You proposed "${selectedMovie.title}" and voted for it.`,
+      });
+    } catch (error) {
+      toast.error("Failed to propose movie", {
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+      });
     }
-
-    // Add new proposal
-    const newProposal: MovieProposal = {
-      id: selectedMovie.id,
-      title: selectedMovie.title,
-      posterPath: selectedMovie.poster_path,
-      votes: 1, // Auto-vote for your own proposal
-      proposedBy: username,
-    };
-
-    const updatedMovieNight = {
-      ...movieNight,
-      proposals: [...movieNight.proposals, newProposal],
-    };
-
-    // Update localStorage
-    localStorage.setItem(
-      `movieNight_${token}`,
-      JSON.stringify(updatedMovieNight)
-    );
-
-    setMovieNight(updatedMovieNight);
-    setSelectedMovie(null);
-
-    toast.success("Movie proposed", {
-      description: `You proposed "${selectedMovie.title}" and voted for it.`,
-    });
   };
 
-  const handleVoteForMovie = (movieId: number) => {
-    if (!movieNight) return;
+  // Votar por película
+  const handleVoteForMovie = async (tmdbId: number) => {
+    if (!movieNight || !username) return;
 
-    // Check if movie exists in proposals
-    const movieIndex = movieNight.proposals.findIndex(
-      (proposal) => proposal.id === movieId
-    );
+    try {
+      const response = await voteForMovie(token, tmdbId, username);
 
-    if (movieIndex === -1) return;
+      // Actualizar estado local
+      setMovieNight({
+        ...movieNight,
+        movies: response.movies,
+      });
+      setUserVotes(response.userVotes || []);
+      setVotesRemaining(response.votesRemaining);
 
-    // Update votes
-    const updatedProposals = [...movieNight.proposals];
-    updatedProposals[movieIndex] = {
-      ...updatedProposals[movieIndex],
-      votes: updatedProposals[movieIndex].votes + 1,
-    };
-
-    // Sort by votes (descending)
-    updatedProposals.sort((a, b) => b.votes - a.votes);
-
-    const updatedMovieNight = {
-      ...movieNight,
-      proposals: updatedProposals,
-    };
-
-    // Update localStorage
-    localStorage.setItem(
-      `movieNight_${token}`,
-      JSON.stringify(updatedMovieNight)
-    );
-
-    setMovieNight(updatedMovieNight);
-
-    toast.success("Vote recorded", {
-      description: `You voted for "${updatedProposals[movieIndex].title}".`,
-    });
+      toast.success("Vote recorded", {
+        description: `You voted for "${response.movie.title}".`,
+      });
+    } catch (error) {
+      toast.error("Failed to vote", {
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+      });
+    }
   };
 
-  const handleSetUsername = () => {
+  // Unirse a la sesión (establecer nombre de usuario)
+  const handleSetUsername = async () => {
     if (!username.trim()) {
       toast.error("Username required", {
         description: "Please enter a username to continue.",
@@ -204,12 +190,27 @@ export default function MovieNightPage() {
       return;
     }
 
-    localStorage.setItem(`username_${token}`, username);
-    setUsernameSet(true);
+    try {
+      const response = await joinMovieNight(token, username);
 
-    toast.success("Username set", {
-      description: `You're now participating as "${username}".`,
-    });
+      // Actualizar estado local
+      setMovieNight(response.movieNight);
+      setUserVotes(response.user.votedFor || []);
+      setVotesRemaining(response.user.votesRemaining);
+      setUsernameSet(true);
+
+      // Guardar en localStorage para futuras visitas
+      localStorage.setItem(`username_${token}`, username);
+
+      toast.success("Username set", {
+        description: `You're now participating as "${username}".`,
+      });
+    } catch (error) {
+      toast.error("Failed to join", {
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+      });
+    }
   };
 
   if (!movieNight) {
@@ -370,8 +371,8 @@ export default function MovieNightPage() {
                     <p className="text-sm mb-4">{selectedMovie.overview}</p>
                     <div className="flex gap-2">
                       <Button onClick={handleProposeMovie}>
-                        {movieNight.proposals.some(
-                          (p) => p.id === selectedMovie.id
+                        {movieNight.movies.some(
+                          (p) => p.tmdbId === selectedMovie.id
                         )
                           ? "Vote for this movie"
                           : "Propose this movie"}
@@ -392,7 +393,7 @@ export default function MovieNightPage() {
       </Card>
 
       <h2 className="text-2xl font-bold mb-4">Proposed Movies</h2>
-      {movieNight.proposals.length === 0 ? (
+      {movieNight.movies.length === 0 ? (
         <div className="text-center py-12 bg-muted rounded-lg">
           <p className="text-muted-foreground">
             No movies have been proposed yet.
@@ -403,11 +404,11 @@ export default function MovieNightPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {movieNight.proposals.map((proposal) => (
+          {movieNight.movies.map((proposal) => (
             <MovieCard
-              key={proposal.id}
+              key={proposal.tmdbId}
               movie={proposal}
-              onVote={() => handleVoteForMovie(proposal.id)}
+              onVote={() => handleVoteForMovie(proposal.tmdbId)}
             />
           ))}
         </div>
