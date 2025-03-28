@@ -49,84 +49,61 @@ export default function Home() {
           {/* Primera fila - deslizamiento hacia la derecha */}
           <div className="absolute h-1/4 w-full overflow-hidden top-0">
             <div className="poster-row animate-slide-right">
-              {row1
-                .concat(row1)
-                .concat(row1)
-                .map((movie, index) => (
-                  <div
-                    key={`row1-${movie.id}-${index}`}
-                    className="poster-item"
-                  >
-                    <img
-                      src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
-                      alt={movie.title}
-                      className="h-full object-cover rounded-sm"
-                    />
-                  </div>
-                ))}
+              {/* Repetimos las películas lo suficiente para garantizar cobertura */}
+              {[...row1, ...row1, ...row1, ...row1].map((movie, index) => (
+                <div key={`row1-${movie.id}-${index}`} className="poster-item">
+                  <img
+                    src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
+                    alt={movie.title}
+                    className="h-full object-cover rounded-sm"
+                  />
+                </div>
+              ))}
             </div>
           </div>
 
           {/* Segunda fila - deslizamiento hacia la izquierda */}
           <div className="absolute h-1/4 w-full overflow-hidden top-1/4">
             <div className="poster-row animate-slide-left">
-              {row2
-                .concat(row2)
-                .concat(row2)
-                .map((movie, index) => (
-                  <div
-                    key={`row2-${movie.id}-${index}`}
-                    className="poster-item"
-                  >
-                    <img
-                      src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
-                      alt={movie.title}
-                      className="h-full object-cover rounded-sm"
-                    />
-                  </div>
-                ))}
+              {[...row2, ...row2, ...row2, ...row2].map((movie, index) => (
+                <div key={`row2-${movie.id}-${index}`} className="poster-item">
+                  <img
+                    src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
+                    alt={movie.title}
+                    className="h-full object-cover rounded-sm"
+                  />
+                </div>
+              ))}
             </div>
           </div>
 
           {/* Tercera fila - deslizamiento hacia la derecha (más lento) */}
           <div className="absolute h-1/4 w-full overflow-hidden top-1/2">
             <div className="poster-row animate-slide-right-slow">
-              {row3
-                .concat(row3)
-                .concat(row3)
-                .map((movie, index) => (
-                  <div
-                    key={`row3-${movie.id}-${index}`}
-                    className="poster-item"
-                  >
-                    <img
-                      src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
-                      alt={movie.title}
-                      className="h-full object-cover rounded-sm"
-                    />
-                  </div>
-                ))}
+              {[...row3, ...row3, ...row3, ...row3].map((movie, index) => (
+                <div key={`row3-${movie.id}-${index}`} className="poster-item">
+                  <img
+                    src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
+                    alt={movie.title}
+                    className="h-full object-cover rounded-sm"
+                  />
+                </div>
+              ))}
             </div>
           </div>
 
           {/* Cuarta fila - deslizamiento hacia la izquierda (más lento) */}
           <div className="absolute h-1/4 w-full overflow-hidden top-3/4">
             <div className="poster-row animate-slide-left-slow">
-              {row4
-                .concat(row4)
-                .concat(row4)
-                .map((movie, index) => (
-                  <div
-                    key={`row4-${movie.id}-${index}`}
-                    className="poster-item"
-                  >
-                    <img
-                      src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
-                      alt={movie.title}
-                      className="h-full object-cover rounded-sm"
-                    />
-                  </div>
-                ))}
+              {[...row4, ...row4, ...row4, ...row4].map((movie, index) => (
+                <div key={`row4-${movie.id}-${index}`} className="poster-item">
+                  <img
+                    src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
+                    alt={movie.title}
+                    className="h-full object-cover rounded-sm"
+                  />
+                </div>
+              ))}
             </div>
           </div>
 
@@ -169,6 +146,7 @@ export default function Home() {
           display: flex;
           white-space: nowrap;
           height: 100%;
+          position: relative;
         }
 
         .poster-item {
@@ -180,36 +158,36 @@ export default function Home() {
 
         /* Animaciones */
         .animate-slide-right {
-          animation: slideRight 90s linear infinite;
-        }
-
-        .animate-slide-left {
-          animation: slideLeft 90s linear infinite;
-        }
-
-        .animate-slide-right-slow {
           animation: slideRight 120s linear infinite;
         }
 
-        .animate-slide-left-slow {
+        .animate-slide-left {
           animation: slideLeft 120s linear infinite;
+        }
+
+        .animate-slide-right-slow {
+          animation: slideRight 150s linear infinite;
+        }
+
+        .animate-slide-left-slow {
+          animation: slideLeft 150s linear infinite;
         }
 
         @keyframes slideRight {
           0% {
-            transform: translateX(-100%);
+            transform: translateX(-50%);
           }
           100% {
-            transform: translateX(0%);
+            transform: translateX(0);
           }
         }
 
         @keyframes slideLeft {
           0% {
-            transform: translateX(0%);
+            transform: translateX(0);
           }
           100% {
-            transform: translateX(-100%);
+            transform: translateX(-50%);
           }
         }
       `}</style>
