@@ -34,6 +34,8 @@ export default function CreateMovieNight() {
   const [time, setTime] = useState("");
   const [limitProposals, setLimitProposals] = useState(false);
   const [maxProposals, setMaxProposals] = useState(5);
+  const [limitVotes, setLimitVotes] = useState(false);
+  const [maxVotesPerUser, setMaxVotesPerUser] = useState(3);
   const [token, setToken] = useState("");
   const [inviteLink, setInviteLink] = useState("");
 
@@ -57,6 +59,7 @@ export default function CreateMovieNight() {
         name,
         date: dateTime.toISOString(),
         maxProposals: limitProposals ? maxProposals : undefined,
+        maxVotesPerUser: limitVotes ? maxVotesPerUser : undefined,
         username: "Host", // Opcional, puedes pedirle al usuario su nombre
       });
 
@@ -178,6 +181,36 @@ export default function CreateMovieNight() {
                       value={maxProposals}
                       onChange={(e) =>
                         setMaxProposals(Number.parseInt(e.target.value))
+                      }
+                    />
+                  </div>
+                )}
+
+                {/* Nueva sección para limitar votos */}
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="limit-votes">Limit votes per user</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Restrict how many votes each person can cast
+                    </p>
+                  </div>
+                  <Switch
+                    id="limit-votes"
+                    checked={limitVotes}
+                    onCheckedChange={setLimitVotes}
+                  />
+                </div>
+                {limitVotes && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="max-votes">Maximum votes per person</Label>
+                    <Input
+                      id="max-votes"
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={maxVotesPerUser}
+                      onChange={(e) =>
+                        setMaxVotesPerUser(Number.parseInt(e.target.value))
                       }
                     />
                   </div>
