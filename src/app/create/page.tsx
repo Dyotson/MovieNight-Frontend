@@ -56,7 +56,7 @@ export default function CreateMovieNight() {
       const response = await createMovieNight({
         name,
         date: dateTime.toISOString(),
-        maxProposals: limitProposals ? maxProposals : null,
+        maxProposals: limitProposals ? maxProposals : undefined,
         username: "Host", // Opcional, puedes pedirle al usuario su nombre
       });
 

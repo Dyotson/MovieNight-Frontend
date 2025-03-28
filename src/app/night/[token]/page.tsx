@@ -281,10 +281,6 @@ export default function MovieNightPage() {
                   {format(new Date(movieNight.date), "EEEE, MMMM d, yyyy")}
                 </span>
                 <span className="hidden md:inline">•</span>
-                <span className="flex items-center">
-                  <Clock className="mr-1 h-4 w-4" />
-                  {movieNight.time}
-                </span>
               </CardDescription>
             </div>
             <Badge variant="outline" className="self-start md:self-auto">
