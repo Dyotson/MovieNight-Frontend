@@ -35,7 +35,37 @@ interface Movie {
   title: string;
   poster_path: string;
   overview: string;
-  release_date: string;
+  release_date?: string; // Hacemos esto opcional para evitar problemas
+}
+
+// Función utilitaria para formatear fechas de manera segura
+function safeFormatDate(
+  dateString: string | undefined,
+  formatString: string,
+  fallback: string = "Unknown date"
+): string {
+  if (!dateString) return fallback;
+
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return fallback;
+    return format(date, formatString);
+  } catch (e) {
+    console.error("Error formatting date:", dateString, e);
+    return fallback;
+  }
+}
+
+// Función auxiliar para verificar si una fecha es válida
+function isValidDate(dateString: string | undefined): boolean {
+  if (!dateString) return false;
+
+  try {
+    const date = new Date(dateString);
+    return !isNaN(date.getTime());
+  } catch (e) {
+    return false;
+  }
 }
 
 export default function MovieNightPage() {
@@ -173,12 +203,6 @@ export default function MovieNightPage() {
     }
   };
 
-  // Función auxiliar para verificar si una fecha es válida
-  function isValidDate(dateString: string): boolean {
-    const date = new Date(dateString);
-    return !isNaN(date.getTime());
-  }
-
   // Votar por película
   const handleVoteForMovie = async (tmdbId: number) => {
     if (!movieNight || !username) return;
@@ -302,7 +326,11 @@ export default function MovieNightPage() {
               <CardDescription className="flex flex-col md:flex-row md:items-center gap-2 mt-2">
                 <span className="flex items-center">
                   <Calendar className="mr-1 h-4 w-4" />
-                  {format(new Date(movieNight.date), "EEEE, MMMM d, yyyy")}
+                  {safeFormatDate(
+                    movieNight.date,
+                    "EEEE, MMMM d, yyyy",
+                    "Date not set"
+                  )}
                 </span>
                 <span className="hidden md:inline">•</span>
               </CardDescription>
@@ -356,9 +384,11 @@ export default function MovieNightPage() {
                       <div>
                         <div className="font-medium">{movie.title}</div>
                         <div className="text-sm text-muted-foreground">
-                          {movie.release_date
-                            ? format(new Date(movie.release_date), "yyyy")
-                            : "Unknown year"}
+                          {safeFormatDate(
+                            movie.release_date,
+                            "yyyy",
+                            "Unknown year"
+                          )}
                         </div>
                       </div>
                     </div>
@@ -384,9 +414,11 @@ export default function MovieNightPage() {
                   <div className="flex-1">
                     <h3 className="text-xl font-bold">{selectedMovie.title}</h3>
                     <p className="text-sm text-muted-foreground mb-2">
-                      {selectedMovie.release_date
-                        ? format(new Date(selectedMovie.release_date), "yyyy")
-                        : "Unknown year"}
+                      {safeFormatDate(
+                        selectedMovie.release_date,
+                        "yyyy",
+                        "Unknown year"
+                      )}
                     </p>
                     <p className="text-sm mb-4">{selectedMovie.overview}</p>
                     <div className="flex gap-2">
