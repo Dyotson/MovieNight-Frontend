@@ -23,7 +23,9 @@ export default function Home() {
         const data = await response.json();
 
         if (data.success && Array.isArray(data.results)) {
-          setPopularMovies(data.results);
+          // Duplicar los resultados para tener suficientes posters
+          const duplicatedMovies = [...data.results, ...data.results];
+          setPopularMovies(duplicatedMovies);
         }
       } catch (error) {
         console.error("Error fetching popular movies:", error);
@@ -35,55 +37,30 @@ export default function Home() {
     fetchPopularMovies();
   }, []);
 
-  // Dividir las películas en filas para el efecto visual
-  const row1 = popularMovies.slice(0, 7);
-  const row2 = popularMovies.slice(7, 14);
-  const row3 = popularMovies.slice(14);
-
   return (
     <div className="relative min-h-screen overflow-hidden">
-      {/* Fondo animado de posters */}
+      {/* Fondo de posters al estilo Plex */}
       {!loading && (
-        <div className="absolute inset-0 w-full h-full -z-10 opacity-20">
-          <div className="poster-row row-1">
-            {row1.concat(row1).map((movie, index) => (
-              <div key={`row1-${movie.id}-${index}`} className="poster-item">
+        <div className="absolute inset-0 w-full h-full -z-10">
+          <div className="poster-grid">
+            {popularMovies.map((movie, index) => (
+              <div key={`poster-${movie.id}-${index}`} className="poster-item">
                 <img
-                  src={`https://image.tmdb.org/t/p/w154${movie.poster_path}`}
+                  src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
                   alt={movie.title}
-                  className="h-40 rounded-md shadow-md"
+                  className="poster-image"
                 />
               </div>
             ))}
           </div>
-          <div className="poster-row row-2">
-            {row2.concat(row2).map((movie, index) => (
-              <div key={`row2-${movie.id}-${index}`} className="poster-item">
-                <img
-                  src={`https://image.tmdb.org/t/p/w154${movie.poster_path}`}
-                  alt={movie.title}
-                  className="h-40 rounded-md shadow-md"
-                />
-              </div>
-            ))}
-          </div>
-          <div className="poster-row row-3">
-            {row3.concat(row3).map((movie, index) => (
-              <div key={`row3-${movie.id}-${index}`} className="poster-item">
-                <img
-                  src={`https://image.tmdb.org/t/p/w154${movie.poster_path}`}
-                  alt={movie.title}
-                  className="h-40 rounded-md shadow-md"
-                />
-              </div>
-            ))}
-          </div>
+          {/* Capa de oscurecimiento para mejor legibilidad */}
+          <div className="absolute inset-0 bg-black/70"></div>
         </div>
       )}
 
       {/* Contenido principal */}
       <div className="flex min-h-screen flex-col items-center justify-center p-4 md:p-24 relative z-10">
-        <div className="max-w-3xl w-full text-center space-y-6 bg-background/80 backdrop-blur-sm p-8 rounded-lg shadow-lg">
+        <div className="max-w-3xl w-full text-center space-y-6 bg-background/60 backdrop-blur-md p-8 rounded-lg shadow-lg">
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
             Movie-Night
           </h1>
@@ -109,49 +86,46 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Estilos para las animaciones */}
+      {/* Estilos para el grid de posters */}
       <style jsx>{`
-        .poster-row {
-          display: flex;
-          gap: 20px;
-          position: absolute;
-          width: max-content;
+        .poster-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+          gap: 0;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
         }
 
         .poster-item {
-          flex-shrink: 0;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+          position: relative;
         }
 
-        .row-1 {
-          top: 10%;
-          animation: slideRight 80s linear infinite;
+        .poster-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transform: scale(1.1);
+          transition: transform 2s ease-in-out;
         }
 
-        .row-2 {
-          top: 40%;
-          animation: slideLeft 90s linear infinite;
+        .poster-item:nth-child(odd) .poster-image {
+          animation: subtle-zoom 15s infinite alternate;
         }
 
-        .row-3 {
-          top: a70%;
-          animation: slideRight 70s linear infinite;
+        .poster-item:nth-child(even) .poster-image {
+          animation: subtle-zoom 18s infinite alternate-reverse;
         }
 
-        @keyframes slideRight {
+        @keyframes subtle-zoom {
           0% {
-            transform: translateX(-50%);
+            transform: scale(1);
           }
           100% {
-            transform: translateX(0%);
-          }
-        }
-
-        @keyframes slideLeft {
-          0% {
-            transform: translateX(0%);
-          }
-          100% {
-            transform: translateX(-50%);
+            transform: scale(1.15);
           }
         }
       `}</style>
