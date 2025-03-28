@@ -112,6 +112,7 @@ export default function MovieNightPage() {
   };
 
   // Proponer película
+  // Función modificada handleProposeMovie para manejar las fechas correctamente
   const handleProposeMovie = async () => {
     if (!selectedMovie || !movieNight || !username) return;
 
@@ -127,14 +128,24 @@ export default function MovieNightPage() {
     }
 
     try {
+      // Crear un objeto seguro para la propuesta que evite problemas con fechas inválidas
+      const movieData = {
+        tmdbId: selectedMovie.id,
+        title: selectedMovie.title,
+        poster_path: selectedMovie.poster_path,
+        overview: selectedMovie.overview,
+      };
+
+      // Solo incluir la fecha de lanzamiento si es válida
+      if (
+        selectedMovie.release_date &&
+        isValidDate(selectedMovie.release_date)
+      ) {
+        movieData.release_date = selectedMovie.release_date;
+      }
+
       const response = await proposeMovie(token, {
-        movie: {
-          tmdbId: selectedMovie.id,
-          title: selectedMovie.title,
-          poster_path: selectedMovie.poster_path,
-          overview: selectedMovie.overview,
-          release_date: selectedMovie.release_date,
-        },
+        movie: movieData,
         proposedBy: username,
       });
 
@@ -148,12 +159,19 @@ export default function MovieNightPage() {
         description: `You proposed "${selectedMovie.title}" and voted for it.`,
       });
     } catch (error) {
+      console.error("Error proposing movie:", error);
       toast.error("Failed to propose movie", {
         description:
           error instanceof Error ? error.message : "Please try again.",
       });
     }
   };
+
+  // Función auxiliar para verificar si una fecha es válida
+  function isValidDate(dateString: string): boolean {
+    const date = new Date(dateString);
+    return !isNaN(date.getTime());
+  }
 
   // Votar por película
   const handleVoteForMovie = async (tmdbId: number) => {
