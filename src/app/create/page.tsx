@@ -42,6 +42,7 @@ export default function CreateMovieNight() {
   const [inviteLink, setInviteLink] = useState("");
   const [isOpen, setIsOpen] = useState(true);
 
+  // Actualizar handleCreate para reemplazar la URL de invitación
   const handleCreate = async () => {
     if (!name || !date || !time) {
       toast.error("Missing information", {
@@ -68,7 +69,14 @@ export default function CreateMovieNight() {
 
       // 2. Obtener token e invite link
       setToken(response.movieNight.token);
-      setInviteLink(response.movieNight.inviteLink);
+
+      // Reemplazar la URL del backend por la URL del frontend
+      // La URL original podría ser algo como: https://movie-night-backend-zeta.vercel.app/night/abcde
+      const frontendUrl = "https://v0-movie-night-app.vercel.app";
+      const token = response.movieNight.token;
+      const correctInviteLink = `${frontendUrl}/night/${token}`;
+
+      setInviteLink(correctInviteLink);
 
       // 3. Avanzar al siguiente paso
       setStep(2);
